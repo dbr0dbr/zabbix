@@ -40,13 +40,13 @@
   when: master
 
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql zabbix
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: master and database_creation.changed
 
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/timescaledb.sql.gz | sudo -u zabbix psql zabbix
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/timescaledb.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: master and database_creation.changed
   
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/create.sql.gz | sudo -u zabbix psql zabbix
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/create.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: master and database_creation.changed
