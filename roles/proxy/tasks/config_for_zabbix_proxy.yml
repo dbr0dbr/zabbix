@@ -24,7 +24,6 @@
     state: present
   become: yes
   become_user: postgres
-  when: master
   register: database_creation
 
 - name: "PostgreSQL | Delegated | Create database user"
@@ -38,11 +37,11 @@
     encrypted: yes
   become: yes
   become_user: postgres
-  when: master
+  
 
 - name: load zabbix db
   shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql zabbix
-  when: master and database_creation.changed
+  when: database_creation.changed
 
   
 - name: Open ports for zabbix

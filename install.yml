@@ -1,0 +1,21 @@
+---
+- hosts: zabbix_app
+  remote_user:
+    root
+  roles:
+   - zabbix
+  environment: "{{ proxy_env }}"
+
+- hosts: zabbix_pg
+  remote_user:
+    root
+  roles:
+   - pg
+  environment: "{{ proxy_env }}"
+  
+- hosts: zabbix_proxy
+  remote_user:
+    root
+  roles:
+   - proxy
+  environment: "{{ proxy_env }}"
