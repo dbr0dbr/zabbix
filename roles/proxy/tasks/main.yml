@@ -1,0 +1,37 @@
+- name: install PostgreSQL
+  include_tasks: install_pg.yml
+
+- name: backup PostgreSQL
+  include_tasks: backuping_pg.yml
+  when: master 
+  tags:
+    - backup
+    - never
+
+- name: set timezone to Europe/Kiev
+  timezone:
+    name: Europe/Kiev
+
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags:
+    - clean
+    - never
+
+- name: Clean pg data
+  shell: 
+    cmd: yum -y remove postgres\*; rm -rf {{ pgdata }}/*; rm -rf /usr/pgsql-{{ ver }}; rm -rf {{ backup_path }}; rm -rf {{ archive_path }}; rm -f /tmp/mypg.log
+    warn: false
+  tags: 
+    - clean
+    - never
+
+- name: backup PostgreSQL
+  include_tasks: backup.yml
+
+- name: config for zabbix
+  include_tasks: config_for_zabbix_proxy.yml
+
+

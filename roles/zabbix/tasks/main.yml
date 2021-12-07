@@ -1,0 +1,80 @@
+- name: Install zabbix repo.
+  dnf:
+     name: "{{ zabbix_repo_url}}"
+     state: present
+     update_cache: yes
+  register: install_status
+
+- name: clean dnf
+  shell: dnf clean all;
+  changed_when: no
+
+- name: install zabbix
+  dnf:
+    name:
+      - zabbix-server-pgsql
+      - zabbix-web-pgsql
+      - zabbix-nginx-conf
+      - zabbix-sql-scripts
+      - zabbix-selinux-policy
+      - zabbix-agent
+    state: latest
+  
+- name: Open ports for zabbix
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  with_items:
+    - 80
+    - 443
+    - 10050
+    - 10051
+
+- name: start and enabled services
+  systemd:
+    state: started
+    enabled: yes
+    name: '{{ item }}'
+  with_items:
+    - zabbix-server 
+    - nginx 
+    - php-fpm
+  when: groups[server_group][0] == inventory_hostname
+
+- name: start and enabled services
+  systemd:
+    state: stopped
+    enabled: yes
+    name: '{{ item }}'
+  with_items:
+    - zabbix-server 
+    - nginx 
+    - php-fpm
+  when: groups[server_group][0] != inventory_hostname
+
+
+- name: Configure nginx server name
+  lineinfile:
+    path: /etc/nginx/conf.d/zabbix.conf
+    regexp: '        server_name'
+    line: '        server_name     {{ zabbix_sever_name }};'
+  notify:
+    - restart nginx
+
+- name: Configure nginx server port
+  lineinfile:
+    path: /etc/nginx/conf.d/zabbix.conf
+    regexp: '^#        listen          80;'
+    line: '        listen          80;'
+  notify:
+    - restart nginx
+
+- name: Template configuration file for /etc/zabbix/zabbix_server.conf
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+  notify:
+    - restart zabbix-server
+

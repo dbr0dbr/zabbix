@@ -1,0 +1,98 @@
+- name: disable build-in module for centos 8
+  shell: dnf -qy module disable postgresql
+  when: ansible_os_family == 'RedHat' and (ansible_distribution_version | splitext)[0] == '8'
+
+- name: "Install repository package"
+  yum: 
+    state: present
+    pkg: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ (ansible_distribution_version | splitext)[0] }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  
+- name: install PostgreSQL
+  dnf:
+    name: postgresql{{ ver }}-server
+
+- name: install PostgreSQL-contrib
+  dnf:
+    name: postgresql{{ ver }}-contrib
+
+- name: install psycopg2
+  dnf:
+    name: python3-psycopg2
+
+- name: init db
+  shell: /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb
+  args:
+    creates: "{{ pgdata }}/PG_VERSION"
+
+- name: Enable end start PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  
+- name: Template configuration file to postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: '{{ pgdata }}/postgresql.conf'
+  notify:
+    - restart pgsql
+  
+- name: Template configuration file to pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: '{{ pgdata }}/pg_hba.conf'
+  notify:
+    - restart pgsql
+
+- name: Open ports for pgsql
+  firewalld:
+    port: "5432/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Create a directory for archive log if it does not exist
+  file:
+    path: '{{ archive_path }}'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+
+- name: Create a directory for backup if it does not exist
+  file:
+    path: '{{ backup_path }}/last'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+    
+- name: Restart PostgreSQL service
+  meta: flush_handlers  
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: postgres
+    password: '{{ pgpassword }}'
+  no_log: False  
+  become_user: postgres
+  become: yes
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: repuser
+    password: '{{ reppassword }}'
+    role_attr_flags: REPLICATION
+  become_user: postgres
+  become: yes
+
+- name: CREATE EXTENSION pg_stat_statements 
+  shell: psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' 
+  when: master 
+  become_user: postgres
+  become: yes
+

@@ -1,0 +1,20 @@
+- name: restart nginx 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: nginx
+  when: groups[server_group][0] == inventory_hostname
+
+- name: restart zabbix-server
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: zabbix-server
+  when: groups[server_group][0] == inventory_hostname
+    
+- name: restart php-fpm 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: php-fpm
+  when: groups[server_group][0] == inventory_hostname

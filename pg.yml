@@ -1,0 +1,9 @@
+---
+- hosts: zabbix_pg
+  remote_user:
+    root
+  roles:
+   - pg
+  environment: "{{ proxy_env }}"
+  
+#tags: reconfigure; clean; backup;

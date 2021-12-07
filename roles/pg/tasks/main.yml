@@ -1,0 +1,52 @@
+- name: set master
+  set_fact:
+    master: True
+  when: (master is defined and master in ok_list) or (master is not defined and groups[server_group][0] == inventory_hostname)
+  tags: always
+
+- name: set slaves
+  set_fact:
+    master: False
+  when: master is not defined
+
+- name: Set master_ip
+  set_fact:
+    master_ip: "{% for host in groups[server_group] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] == True %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
+  tags: always
+
+- name: install PostgreSQL
+  include_tasks: install_pg.yml
+
+- name: backup PostgreSQL
+  include_tasks: backuping_pg.yml
+  when: master 
+  tags:
+    - backup
+    - never
+
+- name: set timezone to Europe/Kiev
+  timezone:
+    name: Europe/Kiev
+
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags:
+    - clean
+    - never
+
+- name: Clean pg data
+  shell: 
+    cmd: yum -y remove postgres\*; rm -rf {{ pgdata }}/*; rm -rf /usr/pgsql-{{ ver }}; rm -rf {{ backup_path }}; rm -rf {{ archive_path }}; rm -f /tmp/mypg.log
+    warn: false
+  tags: 
+    - clean
+    - never
+
+- name: backup PostgreSQL
+  include_tasks: backup.yml
+
+
+- name: config for zabbix
+  include_tasks: config_for_zabbix.yml

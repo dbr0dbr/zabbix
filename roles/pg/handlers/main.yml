@@ -1,0 +1,12 @@
+- name: restart pgsql 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: postgresql-{{ ver }}
+  
+- name: restart lsyncd
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+    name: lsyncd

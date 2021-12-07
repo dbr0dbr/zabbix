@@ -1,0 +1,5 @@
+zabbix_repo_url: https://repo.zabbix.com/zabbix/5.5/rhel/8/x86_64/zabbix-release-5.5-1.el8.noarch.rpm
+zabbix_mysql_pass: 'Zabbix_1'
+server_name: example.com
+server_group: zabbix_app
+zabbix_sever_name: zabbix.local

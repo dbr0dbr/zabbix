@@ -1,0 +1,52 @@
+- name: Install zabbix repo.
+  dnf:
+     name: "{{ zabbix_repo_url}}"
+     state: present
+     update_cache: yes
+  register: install_status
+
+- name: clean dnf
+  shell: dnf clean all;
+  changed_when: no
+
+- name: install zabbix
+  dnf:
+    name:
+      - zabbix-sql-scripts
+      - zabbix-agent
+    state: latest
+
+- name: "PostgreSQL | Delegated | Create database"
+  postgresql_db:
+    name: "{{ zabbix_server_dbname }}"
+    port: "{{ zabbix_server_dbport }}"
+    state: present
+  become: yes
+  become_user: postgres
+  when: master
+  register: database_creation
+
+- name: "PostgreSQL | Delegated | Create database user"
+  postgresql_user:
+    db: "{{ zabbix_server_dbname }}"
+    name: "{{ zabbix_server_dbuser }}"
+    password: "md5{{ (zabbix_server_dbpassword + zabbix_server_dbuser)|hash('md5') }}"
+    port: "{{ zabbix_server_dbport }}"
+    priv: ALL
+    state: present
+    encrypted: yes
+  become: yes
+  become_user: postgres
+  when: master
+
+- name: load zabbix db
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql zabbix
+  when: master and database_creation.changed
+
+- name: load zabbix db
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/timescaledb.sql.gz | sudo -u zabbix psql zabbix
+  when: master and database_creation.changed
+  
+- name: load zabbix db
+  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/create.sql.gz | sudo -u zabbix psql zabbix
+  when: master and database_creation.changed
