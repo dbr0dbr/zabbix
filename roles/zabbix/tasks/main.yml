@@ -76,6 +76,7 @@
     line: php_value[date.timezone] = Europe/Kiev   
   notify:
     - restart nginx
+    - restart php-fpm 
     
 - name: Template configuration file for /etc/zabbix/zabbix_server.conf
   template:
