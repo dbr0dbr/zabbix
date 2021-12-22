@@ -7,17 +7,18 @@
     state: present
     pkg: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ (ansible_distribution_version | splitext)[0] }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
   
-- name: install PostgreSQL
-  dnf:
-    name: postgresql{{ ver }}-server
+- name: Template a file to /etc/yum.repos.d/timescale_timescaledb.repo
+  template:
+    src: timescale_timescaledb.repo.j2
+    dest: /etc/yum.repos.d/timescale_timescaledb.repo
 
-- name: install PostgreSQL-contrib
+- name: install soft
   dnf:
-    name: postgresql{{ ver }}-contrib
-
-- name: install psycopg2
-  dnf:
-    name: python3-psycopg2
+    name:
+      - postgresql{{ ver }}-server
+      - postgresql{{ ver }}-contrib
+      - python3-psycopg2
+      - timescaledb-2-postgresql-{{ ver }}
 
 - name: init db
   shell: /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb

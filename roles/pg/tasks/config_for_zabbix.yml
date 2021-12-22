@@ -9,12 +9,16 @@
   shell: dnf clean all;
   changed_when: no
 
-- name: install zabbix
+- name: install soft
   dnf:
     name:
-      - zabbix-sql-scripts
       - zabbix-agent
-    state: latest
+
+- name: CREATE EXTENSION timescaledb 
+  shell: psql -c 'CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;' 
+  become_user: postgres
+  become: yes
+  when: master
 
 - name: "PostgreSQL | Delegated | Create database"
   postgresql_db:
@@ -40,13 +44,14 @@
   when: master
 
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
+  shell: zcat /usr/share/doc/zabbix-server-pgsql*/create.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: master and database_creation.changed
 
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/timescaledb.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
+  shell: zcat /usr/share/doc/zabbix-server-pgsql*/schema.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
+  when: master and database_creation.changed
+
+- name: load zabbix db
+  shell: zcat /usr/share/doc/zabbix-server-pgsql*/timescaledb.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: master and database_creation.changed
   
-- name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/create.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
-  when: master and database_creation.changed

@@ -31,6 +31,7 @@
     user: root
     state: present
     key: "{{ lookup('file', '/tmp/id_rsa.pub') }}"
+  when: ansible_host == hostvars[groups[server_group][0]]['ansible_host'] and (groups[server_group] | length != 1)
 
 - name: ensures backup dirs exists
   file:
@@ -41,14 +42,6 @@
     - "{{ pg_archive_logs_dir }}"
     - "{{ pg_full_backup_dir }}"
     - "{{ scripts_dir }}"
-
-#- name: backup_db
-#  shell: pg_basebackup --checkpoint=fast -v -R -D '{{ backup_path }}/last/'
-#  become: true
-#  become_user: postgres
-#  tags:
-#    - backup
-#    - never
 
 - name: Install EPEL Repo
   dnf:

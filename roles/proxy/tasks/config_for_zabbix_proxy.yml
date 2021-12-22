@@ -12,7 +12,6 @@
 - name: install zabbix
   dnf:
     name:
-      - zabbix-sql-scripts
       - zabbix-agent
       - zabbix-proxy-pgsql
     state: latest
@@ -40,7 +39,7 @@
   
 
 - name: load zabbix db
-  shell: zcat /usr/share/doc/zabbix-sql-scripts/postgresql/schema.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
+  shell: zcat /usr/share/doc/zabbix-server-pgsql*/schema.sql.gz | sudo -u zabbix psql {{ zabbix_server_dbname }}
   when: database_creation.changed
 
   

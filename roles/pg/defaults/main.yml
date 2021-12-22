@@ -20,7 +20,7 @@ backup_path: /tmp/backup_base
 
 archive_timeout: 60
 
-shared_preload_libraries_line: shared_preload_libraries = 'pg_stat_statements'
+shared_preload_libraries_line: shared_preload_libraries = 'pg_stat_statements,timescaledb'
 
 max_connections: 100
 shared_buffers: 128MB

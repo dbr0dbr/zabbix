@@ -15,8 +15,6 @@
       - zabbix-server-pgsql
       - zabbix-web-pgsql
       - zabbix-nginx-conf
-      - zabbix-sql-scripts
-      - zabbix-selinux-policy
       - zabbix-agent
     state: latest
   
@@ -71,6 +69,14 @@
   notify:
     - restart nginx
 
+- name: set date.timezone
+  lineinfile:
+    path: /etc/php-fpm.d/zabbix.conf
+    regexp: 'php_value[date.timezone]'
+    line: php_value[date.timezone] = Europe/Kiev   
+  notify:
+    - restart nginx
+    
 - name: Template configuration file for /etc/zabbix/zabbix_server.conf
   template:
     src: zabbix_server.conf.j2
